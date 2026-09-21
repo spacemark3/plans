@@ -1,5 +1,7 @@
 'use client'
 
+import Image from 'next/image'
+
 import AuthorChip from '@/app/components/AuthorChip'
 import type { PartnerId } from '@/app/lib/auth'
 import type { ItemDTO } from '@/app/lib/types'
@@ -75,15 +77,27 @@ export default function ItemCard({
         aria-controls={bodyId}
         className="flex w-full items-center gap-3 p-3 text-left transition-colors hover:bg-blush-50/60"
       >
-        <span
-          aria-hidden="true"
-          className={[
-            'flex h-11 w-11 shrink-0 items-center justify-center rounded-field text-xl',
-            item.done ? 'bg-sage-100' : 'bg-blush-100',
-          ].join(' ')}
-        >
-          {item.done ? '✓' : (KIND_EMOJI[item.kind] ?? '⭐')}
-        </span>
+        {item.photoUrl ? (
+          <span className="relative h-11 w-11 shrink-0 overflow-hidden rounded-field bg-blush-100">
+            <Image
+              src={item.photoUrl}
+              alt=""
+              fill
+              sizes="44px"
+              className="object-cover"
+            />
+          </span>
+        ) : (
+          <span
+            aria-hidden="true"
+            className={[
+              'flex h-11 w-11 shrink-0 items-center justify-center rounded-field text-xl',
+              item.done ? 'bg-sage-100' : 'bg-blush-100',
+            ].join(' ')}
+          >
+            {item.done ? '✓' : (KIND_EMOJI[item.kind] ?? '⭐')}
+          </span>
+        )}
 
         <span className="min-w-0 flex-1">
           <span
@@ -113,6 +127,18 @@ export default function ItemCard({
 
       <div id={bodyId} hidden={!expanded} className="border-t border-blush-100">
         <div className="flex flex-col gap-3 p-3">
+          {item.photoUrl ? (
+            <div className="relative aspect-[4/3] w-full overflow-hidden rounded-field bg-blush-50">
+              <Image
+                src={item.photoUrl}
+                alt={`Foto di ${item.title}`}
+                fill
+                sizes="(max-width: 640px) 100vw, 640px"
+                className="object-cover"
+              />
+            </div>
+          ) : null}
+
           {item.description ? (
             <p className="text-sm whitespace-pre-wrap text-ink-600">{item.description}</p>
           ) : (

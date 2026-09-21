@@ -3,6 +3,7 @@
 import { useState, type FormEvent } from 'react'
 
 import Modal from '@/app/components/Modal'
+import PhotoField from '@/app/components/PhotoField'
 import type { ItemDTO, ItemKind } from '@/app/lib/types'
 
 /** Create for a given category, or edit an existing item. */
@@ -48,6 +49,10 @@ export default function ItemFormModal({
   const [description, setDescription] = useState(
     state.mode === 'edit' ? state.item.description : '',
   )
+  const [photoUrl, setPhotoUrl] = useState<string | null>(
+    state.mode === 'edit' ? state.item.photoUrl : null,
+  )
+  const [uploading, setUploading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [pending, setPending] = useState(false)
 
@@ -55,7 +60,10 @@ export default function ItemFormModal({
 
   async function onSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
-    if (pending) return
+    // Saving before upload() resolves would persist photoUrl: null and orphan
+    // the photo. The submit button is disabled too; this is the backstop for
+    // Enter-to-submit.
+    if (pending || uploading) return
 
     setError(null)
     setPending(true)
@@ -70,8 +78,8 @@ export default function ItemFormModal({
           // from the session.
           body: JSON.stringify(
             state.mode === 'edit'
-              ? { title, description }
-              : { kind, title, description },
+              ? { title, description, photoUrl }
+              : { kind, title, description, photoUrl },
           ),
         },
       )
@@ -128,6 +136,13 @@ export default function ItemFormModal({
           />
         </div>
 
+        <PhotoField
+          value={photoUrl}
+          onChange={setPhotoUrl}
+          onUploadingChange={setUploading}
+          disabled={pending}
+        />
+
         {error ? (
           <p role="alert" className="text-sm font-medium text-blush-700">
             {error}
@@ -138,9 +153,15 @@ export default function ItemFormModal({
           <button
             type="submit"
             className="btn-primary flex-1"
-            disabled={pending || title.trim().length === 0}
+            disabled={pending || uploading || title.trim().length === 0}
           >
-            {pending ? 'Salvo...' : state.mode === 'edit' ? 'Salva' : 'Aggiungi'}
+            {uploading
+              ? 'Aspetta la foto...'
+              : pending
+                ? 'Salvo...'
+                : state.mode === 'edit'
+                  ? 'Salva'
+                  : 'Aggiungi'}
           </button>
           <button
             type="button"
