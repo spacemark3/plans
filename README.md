@@ -72,6 +72,103 @@ Per Mongo in locale:
 docker run -d --name bl-mongo -p 27017:27017 mongo:7
 ```
 
+## Deploy su Vercel
+
+### 1. Repo su GitHub
+
+Crealo **vuoto e privato** su <https://github.com/new>: niente README, niente
+`.gitignore`, niente licenza. Se aggiungi uno di quei file il primo push viene
+rifiutato per non-fast-forward.
+
+```powershell
+git remote add origin https://github.com/TUO-UTENTE/bucket-list.git
+git push -u origin main
+```
+
+GitHub non accetta più la password dell'account su HTTPS: lascia fare a Git
+Credential Manager, oppure genera un personal access token con scope `repo` su
+<https://github.com/settings/tokens> e incollalo al posto della password.
+
+Dopo il push, guarda il repo su GitHub e **controlla che `.env` non ci sia**.
+
+### 2. Import su Vercel
+
+<https://vercel.com/new> → scegli il repo. Il framework viene riconosciuto da
+solo come Next.js e la root directory è la root del repo: non serve nessun
+`vercel.json`. **Non deployare ancora.**
+
+### 3. Le variabili d'ambiente — questo è il passo che rompe tutto
+
+**Vercel non legge il tuo `.env` locale.** Mai. Va riempito a mano.
+
+Nella schermata di import apri *Environment Variables*: il campo accetta un
+blocco `.env` incollato tutto insieme. Servono queste sei, e vanno spuntati
+**tutti e tre** gli ambienti (Production, Preview, Development):
+
+| Variabile | Note |
+|---|---|
+| `DATABASE_URL` | Deve contenere il nome del database: `.../bucket-list?retryWrites=...`. Senza, Mongoose usa in silenzio un database chiamato `test` |
+| `AUTH_SECRET` | 32+ byte casuali |
+| `PARTNER_A_NAME` / `PARTNER_B_NAME` | Solo display |
+| `PARTNER_A_PASSWORD` / `PARTNER_B_PASSWORD` | Diverse tra loro |
+
+`BLOB_READ_WRITE_TOKEN` non si scrive a mano: arriva da solo quando colleghi lo
+store Blob (passo 5).
+
+### 4. MongoDB Atlas deve accettare Vercel
+
+Le function di Vercel non hanno un IP fisso, quindi una allowlist per IP passa
+in locale e poi fallisce in produzione con un `serverSelectionTimeout`.
+
+Atlas → Network Access → **`0.0.0.0/0`**. A proteggere il database resta la
+password dell'utente: che sia lunga.
+
+### 5. Blob store (serve solo per le foto)
+
+Vercel → Storage → Create → Blob → collegalo al progetto. Questo inietta
+`BLOB_READ_WRITE_TOKEN` da solo. In locale:
+
+```powershell
+npm i -g vercel
+vercel link
+vercel env pull .env
+```
+
+Non esiste un emulatore locale del Blob: senza store le foto non si possono
+provare in sviluppo.
+
+### 6. Deploy e smoke test
+
+Dal telefono: cancello → login con **tutte e due** le password → aggiungi un
+viaggio → segnalo fatto → scrivi un post. In DevTools il cookie `bl_session`
+adesso deve avere **`Secure`** (in locale no, ed è voluto).
+
+### Se il sito si apre ma il login dà 500
+
+È `AUTH_SECRET` che manca su Vercel. La firma di questo guasto è infida —
+misurata, non ipotizzata:
+
+| Rotta | Risultato senza `AUTH_SECRET` |
+|---|---|
+| `GET /` | **200**, il cancello si apre benissimo |
+| `GET /home` | 307 verso `/`, sembra un normale rimbalzo da sloggati |
+| `GET /api/items` | 401, sembra corretto |
+| `POST /api/auth/login` | **500** |
+
+Solo il login esplode, perché `verifySession(undefined)` ritorna `null` prima
+ancora di toccare la chiave. **L'app sembra sanissima finché qualcuno non prova
+a entrare.** Nei log del server: `Error: Missing AUTH_SECRET environment variable`.
+
+### Altri guasti tipici
+
+| Sintomo | Causa |
+|---|---|
+| Login 200 ma rimbalza subito al cancello | Cookie `Secure` su HTTP. In produzione non capita (Vercel è HTTPS) |
+| Tutto carica, ma le voci non si salvano | `DATABASE_URL` senza nome del database: stai scrivendo su `test` |
+| `serverSelectionTimeout` solo in produzione | Allowlist IP su Atlas, vedi passo 4 |
+| `Authentication failed` | Password Atlas sbagliata, o un carattere speciale non percent-encoded (`@` → `%40`, `#` → `%23`, `/` → `%2F`, `%` → `%25`) |
+| 400 su `/_next/image` | `remotePatterns` sbagliato in `next.config.ts` |
+
 ## Note di architettura
 
 - **Proxy, non middleware.** In Next.js 16 il file è `proxy.ts` in root ed
