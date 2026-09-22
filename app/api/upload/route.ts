@@ -67,14 +67,24 @@ export async function POST(request: Request): Promise<NextResponse> {
           tokenPayload: JSON.stringify({ u: session.u }),
         }
       },
-      onUploadCompleted: async () => {
-        // Webhook-driven, and it does NOT fire on localhost.
-        //
-        // NOTHING REQUIRED GOES HERE, by design: the client persists the
-        // document itself once upload() resolves. Any logic placed here would
-        // work in production and be silently broken in development, in a way
-        // that looks like a Blob bug.
-      },
+      // NO `onUploadCompleted` — deliberately absent, not forgotten.
+      //
+      // It is optional in @vercel/blob, and nothing is required here by
+      // design: the client persists the document itself once upload()
+      // resolves. Passing an empty handler is not free — handleUpload then has
+      // to resolve a public callbackUrl for the completion webhook, which is
+      // impossible off Vercel (it checks `process.env.VERCEL !== '1'`), so
+      // every upload in development logged:
+      //
+      //   onUploadCompleted provided but no callbackUrl could be determined.
+      //
+      // That was a console.warn, not a throw — the POST still returned 200 and
+      // the upload worked — but it is alarming noise on a healthy request.
+      //
+      // If post-upload work is ever genuinely needed, add the handler back and
+      // remember the webhook NEVER fires on localhost: such logic works in
+      // production and is silently dead in development, which looks exactly
+      // like a Blob bug.
     })
 
     return NextResponse.json(result)
