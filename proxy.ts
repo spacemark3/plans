@@ -22,4 +22,14 @@ export async function proxy(request: NextRequest) {
 //
 // Do NOT add `runtime` to this config: the option is not available in Proxy
 // files and setting it throws. Proxy is Node.js by default in Next 16.
-export const config = { matcher: ['/', '/home/:path*', '/trips/:path*', '/blog/:path*'] }
+// Keep in step with NAV_LINKS in app/components/navLinks.ts — a new page route
+// that is missing here loses its proxy guard without any visible symptom.
+export const config = {
+  matcher: [
+    '/',
+    '/home/:path*',
+    '/trips/:path*',
+    '/challenges/:path*',
+    '/blog/:path*',
+  ],
+}

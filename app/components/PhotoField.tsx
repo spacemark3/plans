@@ -59,11 +59,11 @@ export default function PhotoField({
     setError(null)
 
     if (!ACCEPT.includes(file.type)) {
-      setError('Formato non supportato. Usa JPG, PNG, WEBP, HEIC o GIF.')
+      setError('Unsupported format. Use JPG, PNG, WEBP, HEIC or GIF.')
       return
     }
     if (file.size > MAX_BYTES) {
-      setError(`La foto è troppo grande (${humanSize(file.size)}). Massimo 10 MB.`)
+      setError(`That photo is too large (${humanSize(file.size)}). Maximum 10 MB.`)
       return
     }
 
@@ -86,9 +86,9 @@ export default function PhotoField({
     } catch (uploadError) {
       const message = (uploadError as Error)?.message ?? ''
       setError(
-        /unauthorized|non autorizzato/i.test(message)
-          ? 'Sessione scaduta. Ricarica la pagina e riprova.'
-          : 'Caricamento non riuscito. Riprova.',
+        /unauthorized/i.test(message)
+          ? 'Session expired. Reload the page and try again.'
+          : 'Upload failed. Please try again.',
       )
       setPreview((current) => {
         if (current) URL.revokeObjectURL(current)
@@ -118,24 +118,24 @@ export default function PhotoField({
   return (
     <div>
       <span className="label">
-        Foto <span className="font-normal text-ink-400">(facoltativa)</span>
+        Photo <span className="font-normal text-ink-muted">(optional)</span>
       </span>
 
       {shown ? (
-        <div className="relative overflow-hidden rounded-field border border-blush-200">
-          <div className="relative aspect-[4/3] w-full bg-blush-50">
+        <div className="frame relative overflow-hidden">
+          <div className="relative aspect-[4/3] w-full">
             {preview ? (
               // Local object URL — next/image can't optimize it, and shouldn't.
               // eslint-disable-next-line @next/next/no-img-element
               <img
                 src={preview}
-                alt="Anteprima della foto scelta"
+                alt="Preview of the chosen photo"
                 className="absolute inset-0 h-full w-full object-cover"
               />
             ) : (
               <Image
                 src={shown}
-                alt="Foto allegata"
+                alt="Attached photo"
                 fill
                 sizes="(max-width: 640px) 100vw, 640px"
                 className="object-cover"
@@ -144,22 +144,21 @@ export default function PhotoField({
           </div>
 
           {uploading ? (
-            <div className="absolute inset-x-0 bottom-0 bg-ink-900/60 p-2">
+            <div className="absolute inset-x-0 bottom-0 bg-ink/70 p-2">
               <div
                 role="progressbar"
                 aria-valuenow={Math.round(progress)}
                 aria-valuemin={0}
                 aria-valuemax={100}
-                aria-label="Caricamento della foto"
-                className="h-1.5 w-full overflow-hidden rounded-pill bg-ink-100/40"
+                aria-label="Photo upload"
+                className="meter w-full"
               >
-                <div
-                  className="h-full rounded-pill bg-blush-300 transition-[width] duration-200"
-                  style={{ width: `${progress}%` }}
-                />
+                {/* The only inline style in the app, and a legitimate one: the
+                    width is live React state, not a static value. */}
+                <div className="meter-fill" style={{ width: `${progress}%` }} />
               </div>
-              <p className="mt-1 text-center text-xs font-medium text-blush-50">
-                Carico... {Math.round(progress)}%
+              <p className="mt-1 text-center font-mono text-xs font-bold text-paper">
+                Uploading... {Math.round(progress)}%
               </p>
             </div>
           ) : null}
@@ -171,7 +170,7 @@ export default function PhotoField({
           onClick={() => inputRef.current?.click()}
           disabled={disabled || uploading}
         >
-          <span aria-hidden="true">📷</span> Scegli una foto
+          <span aria-hidden="true">[ + ]</span> Choose a photo
         </button>
       )}
 
@@ -183,7 +182,7 @@ export default function PhotoField({
             onClick={() => inputRef.current?.click()}
             disabled={disabled}
           >
-            Cambia
+            Change
           </button>
           <button
             type="button"
@@ -191,7 +190,7 @@ export default function PhotoField({
             onClick={remove}
             disabled={disabled}
           >
-            Togli
+            Remove
           </button>
         </div>
       ) : null}
@@ -206,7 +205,7 @@ export default function PhotoField({
       />
 
       {error ? (
-        <p role="alert" className="mt-2 text-sm font-medium text-blush-700">
+        <p role="alert" className="alert mt-2 text-sm">
           {error}
         </p>
       ) : null}

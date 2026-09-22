@@ -4,33 +4,8 @@ import Image from 'next/image'
 
 import AuthorChip from '@/app/components/AuthorChip'
 import type { PartnerId } from '@/app/lib/auth'
+import { LONG_DATE_TIME, relativeDate } from '@/app/lib/dates'
 import type { ItemDTO } from '@/app/lib/types'
-
-const KIND_EMOJI: Record<string, string> = { trip: '✈️', challenge: '🎯' }
-
-const RELATIVE = new Intl.RelativeTimeFormat('it', { numeric: 'auto' })
-const LONG_DATE = new Intl.DateTimeFormat('it-IT', { dateStyle: 'long' })
-
-const DIVISIONS: { amount: number; unit: Intl.RelativeTimeFormatUnit }[] = [
-  { amount: 60, unit: 'second' },
-  { amount: 60, unit: 'minute' },
-  { amount: 24, unit: 'hour' },
-  { amount: 7, unit: 'day' },
-  { amount: 4.34524, unit: 'week' },
-  { amount: 12, unit: 'month' },
-  { amount: Number.POSITIVE_INFINITY, unit: 'year' },
-]
-
-function relativeDate(iso: string): string {
-  let duration = (new Date(iso).getTime() - Date.now()) / 1000
-  for (const division of DIVISIONS) {
-    if (Math.abs(duration) < division.amount) {
-      return RELATIVE.format(Math.round(duration), division.unit)
-    }
-    duration /= division.amount
-  }
-  return ''
-}
 
 /**
  * Collapsed row + inline expanded body. There is no detail route in this app:
@@ -38,11 +13,14 @@ function relativeDate(iso: string): string {
  * the same card.
  *
  * The row toggle is a `<button>` and the action buttons live in the body as its
- * SIBLINGS — same rule as CategorySection, a button may never contain a button.
+ * SIBLINGS, never nested: a button may never contain a button. Browsers recover
+ * from that by splitting or dropping one, and keyboard activation then hits the
+ * wrong target.
  */
 export default function ItemCard({
   item,
   me,
+  index,
   expanded,
   pending = false,
   onToggleExpand,
@@ -52,6 +30,8 @@ export default function ItemCard({
 }: {
   item: ItemDTO
   me: PartnerId
+  /** 1-based position in its list, shown as the card's index number. */
+  index: number
   expanded: boolean
   pending?: boolean
   onToggleExpand: () => void
@@ -63,22 +43,35 @@ export default function ItemCard({
 
   return (
     <article
-      className={[
-        'overflow-hidden rounded-field border transition-colors',
-        item.done
-          ? 'border-sage-200 bg-sage-50/60'
-          : 'border-blush-100 bg-glass-strong',
-      ].join(' ')}
+      id={`item-${item.id}`}
+      /* The done state is no longer a translucent tint on the card. It is
+         carried by three redundant, fully-opaque signals instead: the cyan icon
+         badge, the strikethrough title, and the DONE stamp. A wash would have
+         had to survive sitting under both paper and cyan; a stamp always reads.
+
+         scroll-mt clears the sticky nav when the index jumps to this card. */
+      className="frame scroll-mt-28 overflow-hidden"
     >
       <button
         type="button"
         onClick={onToggleExpand}
         aria-expanded={expanded}
         aria-controls={bodyId}
-        className="flex w-full items-center gap-3 p-3 text-left transition-colors hover:bg-blush-50/60"
+        className="flex w-full items-center gap-3 p-3 text-left"
       >
+        {/* The index number, matching this card's entry in the section index. */}
+        <span
+          aria-hidden="true"
+          className={[
+            'mark h-11 w-11 shrink-0 text-sm',
+            item.done ? 'bg-cyan' : 'bg-yellow',
+          ].join(' ')}
+        >
+          {item.done ? '✓' : String(index).padStart(2, '0')}
+        </span>
+
         {item.photoUrl ? (
-          <span className="relative h-11 w-11 shrink-0 overflow-hidden rounded-field bg-blush-100">
+          <span className="frame relative hidden h-11 w-11 shrink-0 overflow-hidden sm:block">
             <Image
               src={item.photoUrl}
               alt=""
@@ -87,37 +80,30 @@ export default function ItemCard({
               className="object-cover"
             />
           </span>
-        ) : (
-          <span
-            aria-hidden="true"
-            className={[
-              'flex h-11 w-11 shrink-0 items-center justify-center rounded-field text-xl',
-              item.done ? 'bg-sage-100' : 'bg-blush-100',
-            ].join(' ')}
-          >
-            {item.done ? '✓' : (KIND_EMOJI[item.kind] ?? '⭐')}
-          </span>
-        )}
+        ) : null}
 
         <span className="min-w-0 flex-1">
           <span
             className={[
               'block truncate text-sm font-semibold',
-              item.done ? 'text-ink-500 line-through' : 'text-ink-900',
+              item.done ? 'text-ink-muted line-through' : 'text-ink',
             ].join(' ')}
           >
             {item.title}
           </span>
           <span className="mt-1 flex flex-wrap items-center gap-2">
             <AuthorChip name={item.authorName} self={item.author === me} />
-            <span className="text-xs text-ink-400">{relativeDate(item.createdAt)}</span>
+            {item.done ? <span className="stamp">Done</span> : null}
+            <span className="text-xs text-ink-muted">
+              {relativeDate(item.createdAt)}
+            </span>
           </span>
         </span>
 
         <span
           aria-hidden="true"
           className={[
-            'shrink-0 text-ink-400 transition-transform duration-200',
+            'shrink-0 text-xl transition-transform duration-100',
             expanded ? 'rotate-90' : '',
           ].join(' ')}
         >
@@ -125,13 +111,13 @@ export default function ItemCard({
         </span>
       </button>
 
-      <div id={bodyId} hidden={!expanded} className="border-t border-blush-100">
+      <div id={bodyId} hidden={!expanded} className="rule">
         <div className="flex flex-col gap-3 p-3">
           {item.photoUrl ? (
-            <div className="relative aspect-[4/3] w-full overflow-hidden rounded-field bg-blush-50">
+            <div className="frame relative aspect-[4/3] w-full overflow-hidden">
               <Image
                 src={item.photoUrl}
-                alt={`Foto di ${item.title}`}
+                alt={`Photo of ${item.title}`}
                 fill
                 sizes="(max-width: 640px) 100vw, 640px"
                 className="object-cover"
@@ -140,14 +126,20 @@ export default function ItemCard({
           ) : null}
 
           {item.description ? (
-            <p className="text-sm whitespace-pre-wrap text-ink-600">{item.description}</p>
+            <p className="text-sm whitespace-pre-wrap text-ink">{item.description}</p>
           ) : (
-            <p className="text-sm text-ink-400">Nessuna descrizione.</p>
+            <p className="text-sm text-ink-muted">No description.</p>
           )}
 
+          {/* The collapsed row shows only "3 days ago"; the exact timestamp,
+              with the hour, lives here. */}
+          <p className="font-mono text-xs text-ink-muted">
+            Added {LONG_DATE_TIME.format(new Date(item.createdAt))}
+          </p>
+
           {item.done && item.completedAt ? (
-            <p className="text-xs font-semibold text-sage-700">
-              Completato il {LONG_DATE.format(new Date(item.completedAt))}
+            <p className="font-mono text-xs font-bold uppercase">
+              Completed on {LONG_DATE_TIME.format(new Date(item.completedAt))}
             </p>
           ) : null}
 
@@ -158,7 +150,7 @@ export default function ItemCard({
               onClick={onToggleDone}
               disabled={pending}
             >
-              {item.done ? 'Da fare' : 'Fatto! ✓'}
+              {item.done ? 'To do' : 'Done! ✓'}
             </button>
             <button
               type="button"
@@ -166,7 +158,7 @@ export default function ItemCard({
               onClick={onEdit}
               disabled={pending}
             >
-              Modifica
+              Edit
             </button>
             <button
               type="button"
@@ -174,7 +166,7 @@ export default function ItemCard({
               onClick={onDelete}
               disabled={pending}
             >
-              Elimina
+              Delete
             </button>
           </div>
         </div>

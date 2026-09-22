@@ -8,18 +8,18 @@ import { isItemKind } from '@/app/lib/types'
 
 export async function GET(request: NextRequest): Promise<NextResponse> {
   const session = await getSession()
-  if (!session) return NextResponse.json({ error: 'Non autorizzato' }, { status: 401 })
+  if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
   const { searchParams } = request.nextUrl
 
   const kindParam = searchParams.get('kind')
   if (kindParam !== null && !isItemKind(kindParam)) {
-    return NextResponse.json({ error: 'Categoria non valida.' }, { status: 400 })
+    return NextResponse.json({ error: 'Invalid category.' }, { status: 400 })
   }
 
   const doneParam = searchParams.get('done')
   if (doneParam !== null && doneParam !== 'true' && doneParam !== 'false') {
-    return NextResponse.json({ error: 'Filtro non valido.' }, { status: 400 })
+    return NextResponse.json({ error: 'Invalid filter.' }, { status: 400 })
   }
 
   try {
@@ -30,49 +30,49 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
     return NextResponse.json(items)
   } catch (error) {
     console.error('GET /api/items', error)
-    return NextResponse.json({ error: 'Database non raggiungibile.' }, { status: 503 })
+    return NextResponse.json({ error: 'Database unreachable.' }, { status: 503 })
   }
 }
 
 export async function POST(request: NextRequest): Promise<NextResponse> {
   const session = await getSession()
-  if (!session) return NextResponse.json({ error: 'Non autorizzato' }, { status: 401 })
+  if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
   let body: Record<string, unknown>
   try {
     body = (await request.json()) as Record<string, unknown>
   } catch {
-    return NextResponse.json({ error: 'Richiesta non valida.' }, { status: 400 })
+    return NextResponse.json({ error: 'Invalid request.' }, { status: 400 })
   }
 
   const { kind, title, description, photoUrl } = body
 
   if (!isItemKind(kind)) {
-    return NextResponse.json({ error: 'Categoria non valida.' }, { status: 400 })
+    return NextResponse.json({ error: 'Invalid category.' }, { status: 400 })
   }
 
   if (typeof title !== 'string' || title.trim().length === 0) {
-    return NextResponse.json({ error: 'Il titolo è obbligatorio.' }, { status: 400 })
+    return NextResponse.json({ error: 'A title is required.' }, { status: 400 })
   }
   if (title.trim().length > 120) {
     return NextResponse.json(
-      { error: 'Il titolo può avere al massimo 120 caratteri.' },
+      { error: 'The title can be at most 120 characters.' },
       { status: 400 },
     )
   }
 
   if (description !== undefined && typeof description !== 'string') {
-    return NextResponse.json({ error: 'Descrizione non valida.' }, { status: 400 })
+    return NextResponse.json({ error: 'Invalid description.' }, { status: 400 })
   }
   if (typeof description === 'string' && description.trim().length > 4000) {
     return NextResponse.json(
-      { error: 'La descrizione può avere al massimo 4000 caratteri.' },
+      { error: 'The description can be at most 4000 characters.' },
       { status: 400 },
     )
   }
 
   if (photoUrl !== undefined && photoUrl !== null && typeof photoUrl !== 'string') {
-    return NextResponse.json({ error: 'Foto non valida.' }, { status: 400 })
+    return NextResponse.json({ error: 'Invalid photo.' }, { status: 400 })
   }
 
   try {
@@ -92,6 +92,6 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     return NextResponse.json(toItemDTO(created.toObject()), { status: 201 })
   } catch (error) {
     console.error('POST /api/items', error)
-    return NextResponse.json({ error: 'Non sono riuscito a salvare.' }, { status: 503 })
+    return NextResponse.json({ error: 'Could not save.' }, { status: 503 })
   }
 }

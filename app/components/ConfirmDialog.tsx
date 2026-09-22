@@ -7,8 +7,8 @@ export default function ConfirmDialog({
   open,
   title,
   message,
-  confirmLabel = 'Elimina',
-  cancelLabel = 'Annulla',
+  confirmLabel = 'Delete',
+  cancelLabel = 'Cancel',
   pending = false,
   onConfirm,
   onCancel,
@@ -35,7 +35,7 @@ export default function ConfirmDialog({
             onClick={onConfirm}
             disabled={pending}
           >
-            {pending ? 'Un attimo...' : confirmLabel}
+            {pending ? 'One moment...' : confirmLabel}
           </button>
           <button
             type="button"
@@ -48,7 +48,7 @@ export default function ConfirmDialog({
         </>
       }
     >
-      <p className="text-sm text-ink-600">{message}</p>
+      <p className="text-sm text-ink-muted">{message}</p>
     </Modal>
   )
 }

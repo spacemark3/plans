@@ -8,7 +8,7 @@ import { setSessionCookie } from '@/app/lib/session'
 export async function POST(request: Request): Promise<NextResponse> {
   if (!consumeLoginAttempt(clientIp(request))) {
     return NextResponse.json(
-      { error: 'Troppi tentativi. Riprova tra un minuto.' },
+      { error: 'Too many attempts. Try again in a minute.' },
       { status: 429 },
     )
   }
@@ -22,16 +22,16 @@ export async function POST(request: Request): Promise<NextResponse> {
     const body = (await request.json()) as { password?: unknown }
     password = body?.password
   } catch {
-    return NextResponse.json({ error: 'Richiesta non valida.' }, { status: 400 })
+    return NextResponse.json({ error: 'Invalid request.' }, { status: 400 })
   }
 
   if (typeof password !== 'string' || password.length === 0) {
-    return NextResponse.json({ error: 'Inserisci la password.' }, { status: 400 })
+    return NextResponse.json({ error: 'Enter your password.' }, { status: 400 })
   }
 
   const partner = await checkPassword(password)
   if (!partner) {
-    return NextResponse.json({ error: 'Password non corretta.' }, { status: 401 })
+    return NextResponse.json({ error: 'Incorrect password.' }, { status: 401 })
   }
 
   await setSessionCookie(partner)

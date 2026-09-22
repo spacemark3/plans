@@ -25,7 +25,7 @@ export default function GateForm() {
       const data = (await response.json().catch(() => null)) as { error?: string } | null
 
       if (!response.ok) {
-        setError(data?.error ?? 'Qualcosa è andato storto. Riprova.')
+        setError(data?.error ?? 'Something went wrong. Please try again.')
         setPassword('')
         return
       }
@@ -34,7 +34,7 @@ export default function GateForm() {
       router.replace('/home')
       router.refresh()
     } catch {
-      setError('Impossibile raggiungere il server. Controlla la connessione.')
+      setError('Could not reach the server. Check your connection.')
     } finally {
       setPending(false)
     }
@@ -51,7 +51,7 @@ export default function GateForm() {
           name="password"
           type="password"
           className="field"
-          placeholder="La tua password"
+          placeholder="Your password"
           autoComplete="current-password"
           autoFocus
           value={password}
@@ -62,12 +62,15 @@ export default function GateForm() {
         />
       </div>
 
-      {/* Reserved live region: the error appears in place, the layout doesn't jump. */}
+      {/* Reserved live region: the error appears in place, the layout doesn't
+          jump. It must stay mounted even while empty or aria-live never fires.
+          The `.alert` skin is an ink-on-pink block rather than coloured text —
+          pink on paper is 3.19:1 and would fail AA. */}
       <p
         id="password-error"
         role="alert"
         aria-live="polite"
-        className="min-h-5 text-sm font-medium text-blush-700"
+        className={`min-h-11 text-sm ${error ? 'alert' : ''}`}
       >
         {error}
       </p>
@@ -77,7 +80,7 @@ export default function GateForm() {
         className="btn-primary w-full"
         disabled={pending || password.length === 0}
       >
-        {pending ? 'Un attimo...' : 'Entra'}
+        {pending ? 'One moment...' : 'Enter'}
       </button>
     </form>
   )

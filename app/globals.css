@@ -1,73 +1,80 @@
 @import "tailwindcss";
 
 /* ---------------------------------------------------------------------------
-   Design tokens.
+   Design tokens — neo-brutalist poster.
 
    Everything the UI is allowed to use lives here. No component may write a bare
-   hex literal — every colour, radius, shadow and easing goes through a token so
-   the whole palette can be re-tuned from one file.
+   hex literal, and no component should write a raw border utility either: the
+   3px ink rule is baked into the semantic classes below so it can never drift.
 
-   Colours are oklch: perceptually even lightness steps, so the 100/200/300 ramp
-   actually looks like a ramp.
+   Colours stay oklch (perceptually even, and it keeps the file honest about
+   lightness), with the source hex in a comment beside each one.
+
+   THE RULE THAT DRIVES THE WHOLE PALETTE:
+   colour is only ever a FILL, and text sitting on it is always ink. Measured
+   against these exact values — black clears AA on paper (19.63:1), yellow
+   (16.46:1), cyan (13.65:1) and pink (6.16:1), while WHITE fails on every one
+   of them (1.28 / 1.54 / 3.41). Going the other way is just as bad: pink, cyan
+   and yellow used AS TEXT on paper score 3.19 / 1.44 / 1.19 and are unusable.
+   So: never white-on-colour, never colour-as-text. Use --color-alert for the
+   one case that genuinely needs coloured text.
 --------------------------------------------------------------------------- */
 
 @theme {
-  /* Blush — the primary rose. Buttons, links, active nav, accents. */
-  --color-blush-50: oklch(0.984 0.008 350);
-  --color-blush-100: oklch(0.963 0.019 351);
-  --color-blush-200: oklch(0.925 0.038 352);
-  --color-blush-300: oklch(0.872 0.065 353);
-  --color-blush-400: oklch(0.802 0.101 354);
-  --color-blush-500: oklch(0.724 0.134 356);
-  --color-blush-600: oklch(0.641 0.149 358);
-  --color-blush-700: oklch(0.553 0.136 359);
-  --color-blush-800: oklch(0.457 0.109 359);
-  --color-blush-900: oklch(0.372 0.083 358);
+  /* Paper — the one surface colour. Everything is a card on paper. */
+  --color-paper: oklch(0.977 0.010 87.5); /* #FAF7F0 */
 
-  /* Sage — the "fatto!" counterpart. Completed items, success states. */
-  --color-sage-50: oklch(0.985 0.010 165);
-  --color-sage-100: oklch(0.960 0.026 166);
-  --color-sage-200: oklch(0.918 0.048 167);
-  --color-sage-300: oklch(0.855 0.073 168);
-  --color-sage-500: oklch(0.686 0.106 170);
-  --color-sage-700: oklch(0.505 0.081 172);
-  --color-sage-800: oklch(0.415 0.065 173);
+  /* Ink — borders, text, shadows. Pure black, no warmth, no ramp. */
+  --color-ink: oklch(0 0 0); /* #000000 */
 
-  /* Ink — warm neutrals, never a cold grey. Text and borders. */
-  --color-ink-50: oklch(0.984 0.003 340);
-  --color-ink-100: oklch(0.955 0.005 340);
-  --color-ink-200: oklch(0.906 0.007 340);
-  --color-ink-300: oklch(0.836 0.009 340);
-  --color-ink-400: oklch(0.696 0.012 340);
-  --color-ink-500: oklch(0.572 0.014 340);
-  --color-ink-600: oklch(0.470 0.016 340);
-  --color-ink-700: oklch(0.386 0.017 340);
-  --color-ink-800: oklch(0.295 0.016 340);
-  --color-ink-900: oklch(0.224 0.014 340);
+  /* The only muted text tone. NOTE: the usual "safe grey" #767676 FAILS here
+     (4.25:1) because paper is a shade darker than white. This one is 6.25:1. */
+  --color-ink-muted: oklch(0.475 0 89.9); /* #5C5C5C */
 
-  /* Page backdrop. */
-  --color-cream: oklch(0.988 0.011 60);
+  /* Spot colours. FILLS ONLY — ink text on top, never white. */
+  --color-yellow: oklch(0.915 0.191 101.0); /* #FFE500 — primary actions */
+  --color-yellow-dark: oklch(0.535 0.145 84.0); /* darker yellow for text */
+  --color-cyan: oklch(0.844 0.146 209.3); /* #00E5FF — done / completed */
+  --color-pink: oklch(0.666 0.228 10.9); /* #FF3D71 — danger / challenges */
 
-  /* Glass surfaces, expressed as alpha over whatever is behind them. */
-  --color-glass: oklch(1 0 0 / 0.68);
-  --color-glass-strong: oklch(1 0 0 / 0.86);
-  --color-glass-border: oklch(1 0 0 / 0.72);
+  /* The one colour allowed AS TEXT on paper — 5.42:1. Errors only. */
+  --color-alert: oklch(0.535 0.207 13.6); /* #C81048 */
 
-  --radius-card: 1.5rem;
-  --radius-field: 1rem;
-  --radius-pill: 9999px;
+  /* Hard offset shadows: zero blur, zero spread, pure ink. The whole look. */
+  --shadow-hard-sm: 3px 3px 0 0 var(--color-ink);
+  --shadow-hard: 6px 6px 0 0 var(--color-ink);
+  --shadow-hard-lg: 10px 10px 0 0 var(--color-ink);
 
-  --shadow-soft: 0 1px 2px oklch(0.372 0.083 358 / 0.05),
-    0 8px 24px -12px oklch(0.372 0.083 358 / 0.18);
-  --shadow-glass: 0 1px 1px oklch(1 0 0 / 0.6) inset,
-    0 2px 4px oklch(0.372 0.083 358 / 0.04),
-    0 16px 40px -20px oklch(0.372 0.083 358 / 0.22);
-  --shadow-lift: 0 1px 1px oklch(1 0 0 / 0.6) inset,
-    0 4px 8px oklch(0.372 0.083 358 / 0.06),
-    0 24px 48px -20px oklch(0.372 0.083 358 / 0.3);
+  /* Type scale. The `--text-*--line-height` / `--letter-spacing` /
+     `--font-weight` modifier keys are Tailwind v4 syntax (verified against the
+     installed 4.3.3). Weight is pinned to 400 on the display sizes because
+     Archivo Black ships ONLY 400 — asking for more synthesises a faux-bold. */
+  /* Fluid: clamp() means one class works from a 320px phone up to a desktop
+     without a single responsive variant at the call site. At 3.25rem fixed,
+     "Recently added"-length headings overflowed a narrow screen. */
+  --text-poster: clamp(2.25rem, 1.4rem + 4vw, 3.5rem);
+  --text-poster--line-height: 0.92;
+  --text-poster--letter-spacing: -0.03em;
+  --text-poster--font-weight: 400;
 
-  --ease-soft: cubic-bezier(0.32, 0.72, 0.26, 1);
-  --ease-pop: cubic-bezier(0.34, 1.4, 0.5, 1);
+  --text-display: clamp(1.75rem, 1.35rem + 1.9vw, 2.25rem);
+  --text-display--line-height: 0.95;
+  --text-display--letter-spacing: -0.02em;
+  --text-display--font-weight: 400;
+
+  --text-title: clamp(1.125rem, 1rem + 0.6vw, 1.375rem);
+  --text-title--line-height: 1.05;
+  --text-title--letter-spacing: -0.01em;
+  --text-title--font-weight: 400;
+
+  /* Mono eyebrow: section headings, labels, counters. */
+  --text-section: 0.8125rem;
+  --text-section--line-height: 1.1;
+  --text-section--letter-spacing: 0.12em;
+  --text-section--font-weight: 700;
+
+  /* One easing. Brutalism does not ease gently. */
+  --ease-snap: cubic-bezier(0.2, 0, 0, 1);
 }
 
 /* `inline` is what makes Tailwind emit a var() reference instead of snapshotting
@@ -76,55 +83,52 @@
 @theme inline {
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
+  --font-display: var(--font-display);
 }
 
 @layer base {
   html {
-    /* A soft rose wash that stays put while the page scrolls. */
-    background-color: var(--color-cream);
-    background-image:
-      radial-gradient(
-        60rem 40rem at 12% -10%,
-        var(--color-blush-100) 0%,
-        transparent 60%
-      ),
-      radial-gradient(
-        50rem 36rem at 92% 6%,
-        var(--color-sage-50) 0%,
-        transparent 58%
-      ),
-      radial-gradient(
-        44rem 40rem at 50% 110%,
-        var(--color-blush-50) 0%,
-        transparent 62%
-      );
-    background-attachment: fixed;
+    /* Flat paper. The cards carry the whole design — nothing behind them. */
+    background-color: var(--color-paper);
   }
 
   body {
     /* NOT Arial. This must resolve to the next/font family, or the whole font
        pipeline is silently dead while looking like it works. */
     font-family: var(--font-sans);
-    color: var(--color-ink-800);
+    color: var(--color-ink);
   }
 
   h1,
   h2,
   h3 {
-    color: var(--color-ink-900);
-    letter-spacing: -0.02em;
+    font-family: var(--font-display);
+    text-transform: uppercase;
+    color: var(--color-ink);
     text-wrap: balance;
+    /* Archivo Black is wide, and a long unbroken word at poster size will push
+       a phone layout sideways. Break rather than overflow. */
+    overflow-wrap: break-word;
   }
 
+  /*
+    Focus ring: ink, not cyan.
+
+    Cyan was the obvious "electric" choice and it is wrong — cyan on paper is
+    1.44:1, nowhere near the 3:1 WCAG 2.1 demands of a focus indicator. Ink on
+    paper is 19.63:1 and ink on yellow is 16.46:1, so an ink ring reads
+    everywhere in this palette. The 3px OFFSET is what keeps it legible on the
+    black-bordered controls: it leaves a paper gap so the ring reads as a
+    separate double line rather than merging into the border.
+  */
   :focus-visible {
-    outline: 2px solid var(--color-blush-500);
-    outline-offset: 2px;
-    border-radius: 4px;
+    outline: 3px solid var(--color-ink);
+    outline-offset: 3px;
   }
 
   ::selection {
-    background-color: var(--color-blush-200);
-    color: var(--color-ink-900);
+    background-color: var(--color-yellow);
+    color: var(--color-ink);
   }
 
   @media (prefers-reduced-motion: reduce) {
@@ -139,13 +143,16 @@
 }
 
 @layer components {
-  .card-glass {
-    background-color: var(--color-glass);
-    border: 1px solid var(--color-glass-border);
-    border-radius: var(--radius-card);
-    box-shadow: var(--shadow-glass);
-    backdrop-filter: blur(16px) saturate(1.4);
-    -webkit-backdrop-filter: blur(16px) saturate(1.4);
+  /* The card. Hard rule, hard shadow, flat paper fill. */
+  .card-brut {
+    background-color: var(--color-paper);
+    border: 3px solid var(--color-ink);
+    box-shadow: var(--shadow-hard);
+  }
+
+  /* Empty states — same geometry, dashed, no shadow: reads as "nothing here". */
+  .card-dashed {
+    border: 3px dashed var(--color-ink);
   }
 
   .btn-primary,
@@ -156,128 +163,187 @@
     gap: 0.5rem;
     min-height: 2.75rem;
     padding-inline: 1.25rem;
-    border-radius: var(--radius-pill);
-    font-size: 0.9375rem;
-    font-weight: 600;
+    border: 3px solid var(--color-ink);
+    font-family: var(--font-display);
+    font-size: 0.875rem;
+    text-transform: uppercase;
+    letter-spacing: 0.02em;
     line-height: 1;
+    color: var(--color-ink);
     cursor: pointer;
+    box-shadow: var(--shadow-hard-sm);
     transition:
-      transform 0.18s var(--ease-pop),
-      background-color 0.18s var(--ease-soft),
-      box-shadow 0.18s var(--ease-soft),
-      color 0.18s var(--ease-soft);
+      transform 0.1s var(--ease-snap),
+      box-shadow 0.1s var(--ease-snap);
+  }
+
+  /* Hover lifts the button off the page: it moves up-left by exactly the amount
+     the shadow grows, so the shadow's outer edge never moves. */
+  .btn-primary:hover:not(:disabled),
+  .btn-ghost:hover:not(:disabled) {
+    transform: translate(-3px, -3px);
+    box-shadow: var(--shadow-hard);
+  }
+
+  /* ...and the press drops it flat onto its own shadow. */
+  .btn-primary:active:not(:disabled),
+  .btn-ghost:active:not(:disabled) {
+    transform: translate(3px, 3px);
+    box-shadow: none;
   }
 
   .btn-primary:disabled,
   .btn-ghost:disabled {
     cursor: not-allowed;
-    opacity: 0.55;
+    opacity: 0.5;
     transform: none;
+    box-shadow: var(--shadow-hard-sm);
   }
 
   .btn-primary {
-    background-color: var(--color-blush-500);
-    color: var(--color-blush-50);
-    box-shadow: var(--shadow-soft);
-  }
-
-  .btn-primary:hover:not(:disabled) {
-    background-color: var(--color-blush-600);
-    transform: translateY(-1px);
-    box-shadow: var(--shadow-lift);
-  }
-
-  .btn-primary:active:not(:disabled) {
-    transform: translateY(0);
-    background-color: var(--color-blush-700);
+    background-color: var(--color-yellow);
   }
 
   .btn-ghost {
-    background-color: var(--color-glass-strong);
-    color: var(--color-ink-700);
-    border: 1px solid var(--color-blush-200);
+    background-color: var(--color-paper);
   }
 
-  .btn-ghost:hover:not(:disabled) {
-    background-color: var(--color-blush-50);
-    color: var(--color-blush-800);
-    border-color: var(--color-blush-300);
-  }
-
+  /* Square tags. Mono, uppercase, ink on a flat fill. */
   .chip {
     display: inline-flex;
     align-items: center;
     gap: 0.375rem;
-    padding: 0.25rem 0.625rem;
-    border-radius: var(--radius-pill);
-    background-color: var(--color-blush-100);
-    color: var(--color-blush-800);
-    border: 1px solid var(--color-blush-200);
-    font-size: 0.75rem;
-    font-weight: 600;
+    padding: 0.1875rem 0.5rem;
+    border: 2px solid var(--color-ink);
+    background-color: var(--color-yellow);
+    color: var(--color-ink);
+    font-family: var(--font-mono);
+    font-size: 0.6875rem;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
     line-height: 1.2;
     white-space: nowrap;
   }
 
-  .chip-sage {
-    background-color: var(--color-sage-100);
-    color: var(--color-sage-800);
-    border-color: var(--color-sage-200);
+  /* NOTE: there is deliberately no `.chip-done`. The old system carried a
+     `.chip-sage` that no component ever used — dead CSS that still had to be
+     read and reasoned about. The done state is a `.stamp`, not a chip. */
+  .chip-quiet {
+    background-color: var(--color-paper);
   }
 
-  .chip-quiet {
-    background-color: var(--color-ink-100);
-    color: var(--color-ink-600);
-    border-color: var(--color-ink-200);
+  /* A square typographic mark: the replacement for the old emoji icon set. */
+  .mark {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border: 3px solid var(--color-ink);
+    background-color: var(--color-paper);
+    color: var(--color-ink);
+    font-family: var(--font-mono);
+    font-weight: 700;
+    line-height: 1;
+  }
+
+  /* Framed media. Every photo is a hard-edged rectangle with an ink rule. */
+  .frame {
+    border: 3px solid var(--color-ink);
+    background-color: var(--color-paper);
+  }
+
+  /* Section divider inside an expanded card. */
+  .rule {
+    border-top: 3px solid var(--color-ink);
+  }
+
+  /* The "FATTO" marker. Replaces the old translucent sage wash — a structural
+     device rather than a tint, so the done state survives at any contrast. */
+  .stamp {
+    display: inline-flex;
+    align-items: center;
+    border: 3px solid var(--color-ink);
+    background-color: var(--color-cyan);
+    color: var(--color-ink);
+    padding: 0.125rem 0.5rem;
+    font-family: var(--font-display);
+    font-size: 0.75rem;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    line-height: 1.4;
+  }
+
+  /*
+    Error block. NOT coloured text: pink on paper is 3.19:1 and fails AA, so the
+    error is ink on a pink fill (6.16:1) inside an ink rule instead.
+  */
+  .alert {
+    border: 3px solid var(--color-ink);
+    background-color: var(--color-pink);
+    color: var(--color-ink);
+    padding: 0.5rem 0.75rem;
+    font-size: 0.875rem;
+    font-weight: 600;
   }
 
   .field {
     display: block;
     width: 100%;
     min-height: 2.75rem;
-    padding: 0.625rem 0.875rem;
-    border-radius: var(--radius-field);
-    border: 1px solid var(--color-blush-200);
-    background-color: var(--color-glass-strong);
-    color: var(--color-ink-900);
+    padding: 0.625rem 0.75rem;
+    border: 3px solid var(--color-ink);
+    background-color: var(--color-paper);
+    color: var(--color-ink);
     font: inherit;
-    transition:
-      border-color 0.18s var(--ease-soft),
-      box-shadow 0.18s var(--ease-soft);
+    transition: box-shadow 0.1s var(--ease-snap);
   }
 
   .field::placeholder {
-    color: var(--color-ink-400);
-  }
-
-  .field:hover:not(:disabled) {
-    border-color: var(--color-blush-300);
+    color: var(--color-ink-muted);
   }
 
   .field:focus {
+    /* The ink focus ring from @layer base still applies on top of this. */
     outline: none;
-    border-color: var(--color-blush-400);
-    box-shadow: 0 0 0 4px var(--color-blush-100);
+    box-shadow: var(--shadow-hard-sm);
   }
 
   .field:disabled {
-    opacity: 0.6;
+    opacity: 0.5;
     cursor: not-allowed;
   }
 
   .field[aria-invalid="true"] {
-    border-color: var(--color-blush-600);
+    border-color: var(--color-alert);
   }
 
   .field[aria-invalid="true"]:focus {
-    box-shadow: 0 0 0 4px var(--color-blush-200);
+    box-shadow: 3px 3px 0 0 var(--color-alert);
   }
 
   .label {
     display: block;
     margin-bottom: 0.375rem;
+    font-family: var(--font-mono);
     font-size: 0.8125rem;
-    font-weight: 600;
-    color: var(--color-ink-600);
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--color-ink);
+  }
+
+  /* Upload progress. Square meter, ink rule, yellow fill — the width itself is
+     set inline from React state, which is the one legitimate inline style. */
+  .meter {
+    border: 3px solid var(--color-ink);
+    background-color: var(--color-paper);
+    height: 1.25rem;
+    overflow: hidden;
+  }
+
+  .meter-fill {
+    height: 100%;
+    background-color: var(--color-yellow);
+    transition: width 0.1s var(--ease-snap);
   }
 }

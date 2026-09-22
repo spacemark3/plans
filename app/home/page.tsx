@@ -4,34 +4,39 @@ import AuthorChip from '@/app/components/AuthorChip'
 import EmptyState from '@/app/components/EmptyState'
 import NavBar from '@/app/components/NavBar'
 import { getHomeSummary } from '@/app/lib/data'
+import { LONG_DATE_TIME } from '@/app/lib/dates'
 import { partnerName } from '@/app/lib/partners'
 import { requireSession } from '@/app/lib/session'
 
-const KIND_EMOJI = { trip: '✈️', challenge: '🎯' } as const
-const LONG_DATE = new Intl.DateTimeFormat('it-IT', { dateStyle: 'long' })
+/** Typographic marks replace the old ✈️/🎯 pair. */
+const KIND_MARK = { trip: '01', challenge: '02' } as const
 
 function StatCard({
-  emoji,
   label,
   todo,
   done,
+  fill,
+  href,
 }: {
-  emoji: string
   label: string
   todo: number
   done: number
+  /** A spot-colour fill token class — the card's whole identity. */
+  fill: string
+  /** Each category owns a route, so the card is the way into it. */
+  href: string
 }) {
   return (
-    <div className="card-glass flex flex-col gap-1 p-4">
-      <span className="flex items-center gap-1.5 text-xs font-semibold text-ink-500">
-        <span aria-hidden="true">{emoji}</span>
-        {label}
+    <Link
+      href={href}
+      className={`card-brut flex flex-col gap-1 p-4 transition-transform hover:-translate-x-1 hover:-translate-y-1 ${fill}`}
+    >
+      <span className="text-section font-mono">{label}</span>
+      <span className="font-display text-poster">{todo}</span>
+      <span className="text-xs font-semibold">
+        to do · {done} done
       </span>
-      <span className="text-2xl font-semibold text-ink-900">{todo}</span>
-      <span className="text-xs text-ink-400">
-        da fare · {done} {done === 1 ? 'fatto' : 'fatti'}
-      </span>
-    </div>
+    </Link>
   )
 }
 
@@ -50,45 +55,46 @@ export default async function HomePage() {
       <NavBar active="home" />
       <main className="mx-auto w-full max-w-3xl flex-1 px-4 pb-16 pt-4 sm:px-6">
         <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
-          <h1 className="text-2xl font-semibold">Ciao, {me}!</h1>
+          <h1 className="text-poster">Hi, {me}!</h1>
           <AuthorChip name={me} self />
         </div>
 
+        {/* Three spot colours, one per card — the poster's whole palette in a row. */}
         <div className="mb-6 grid grid-cols-2 gap-3 sm:grid-cols-3">
           <StatCard
-            emoji={KIND_EMOJI.trip}
-            label="Viaggi"
+            label="Trips"
             todo={summary.items.trip.todo}
             done={summary.items.trip.done}
+            fill="bg-yellow"
+            href="/trips"
           />
           <StatCard
-            emoji={KIND_EMOJI.challenge}
-            label="Sfide"
+            label="Challenges"
             todo={summary.items.challenge.todo}
             done={summary.items.challenge.done}
+            fill="bg-pink"
+            href="/challenges"
           />
-          <div className="card-glass col-span-2 flex flex-col gap-1 p-4 sm:col-span-1">
-            <span className="flex items-center gap-1.5 text-xs font-semibold text-ink-500">
-              <span aria-hidden="true">📖</span>
-              Post
+          <Link
+            href="/blog"
+            className="card-brut col-span-2 flex flex-col gap-1 bg-cyan p-4 transition-transform hover:-translate-x-1 hover:-translate-y-1 sm:col-span-1"
+          >
+            <span className="text-section font-mono">Posts</span>
+            <span className="font-display text-poster">{summary.postCount}</span>
+            <span className="text-xs font-semibold">
+              {summary.postCount === 1 ? 'story' : 'stories'}
             </span>
-            <span className="text-2xl font-semibold text-ink-900">
-              {summary.postCount}
-            </span>
-            <span className="text-xs text-ink-400">
-              {summary.postCount === 1 ? 'racconto' : 'racconti'}
-            </span>
-          </div>
+          </Link>
         </div>
 
         {nothingYet ? (
           <EmptyState
-            emoji="🫧"
-            title="Si comincia!"
-            description="Non c'è ancora niente. Aggiungete il primo viaggio o la prima sfida."
+            mark="*"
+            title="Let’s begin!"
+            description="Nothing here yet. Add your first trip or challenge."
             action={
               <Link href="/trips" className="btn-primary mt-1">
-                Vai alla lista
+                Go to the list
               </Link>
             }
           />
@@ -96,38 +102,38 @@ export default async function HomePage() {
           <div className="flex flex-col gap-6">
             <section>
               <div className="mb-3 flex items-center justify-between gap-3">
-                <h2 className="text-base font-semibold">Aggiunti di recente</h2>
+                <h2 className="text-section font-mono">Recently added</h2>
                 <Link
                   href="/trips"
-                  className="text-sm font-semibold text-blush-700 hover:text-blush-800"
+                  className="text-sm font-semibold underline decoration-2 underline-offset-4"
                 >
-                  Vedi tutto
+                  See all
                 </Link>
               </div>
 
               {summary.recentItems.length === 0 ? (
-                <p className="text-sm text-ink-400">Ancora niente in lista.</p>
+                <p className="text-sm text-ink-muted">Nothing in the list yet.</p>
               ) : (
                 <ul className="flex flex-col gap-2">
                   {summary.recentItems.map((item) => (
                     <li
                       key={item.id}
-                      className="flex items-center gap-3 rounded-field border border-blush-100 bg-glass-strong p-3"
+                      className="frame flex items-center gap-3 p-3"
                     >
                       <span
                         aria-hidden="true"
                         className={[
-                          'flex h-10 w-10 shrink-0 items-center justify-center rounded-field text-lg',
-                          item.done ? 'bg-sage-100' : 'bg-blush-100',
+                          'mark h-10 w-10 shrink-0 text-sm',
+                          item.done ? 'bg-cyan' : 'bg-yellow',
                         ].join(' ')}
                       >
-                        {item.done ? '✓' : KIND_EMOJI[item.kind]}
+                        {item.done ? '✓' : KIND_MARK[item.kind]}
                       </span>
                       <span className="min-w-0 flex-1">
                         <span
                           className={[
                             'block truncate text-sm font-semibold',
-                            item.done ? 'text-ink-500 line-through' : 'text-ink-900',
+                            item.done ? 'text-ink-muted line-through' : 'text-ink',
                           ].join(' ')}
                         >
                           {item.title}
@@ -147,38 +153,36 @@ export default async function HomePage() {
 
             <section>
               <div className="mb-3 flex items-center justify-between gap-3">
-                <h2 className="text-base font-semibold">Ultimo post</h2>
+                <h2 className="text-section font-mono">Latest post</h2>
                 <Link
                   href="/blog"
-                  className="text-sm font-semibold text-blush-700 hover:text-blush-800"
+                  className="text-sm font-semibold underline decoration-2 underline-offset-4"
                 >
-                  Vedi tutto
+                  See all
                 </Link>
               </div>
 
               {summary.latestPost ? (
                 <Link
                   href="/blog"
-                  className="card-glass block p-5 transition-shadow hover:shadow-lift"
+                  className="card-brut block p-5 transition-transform hover:-translate-x-1 hover:-translate-y-1"
                 >
-                  <h3 className="text-base font-semibold">
-                    {summary.latestPost.title}
-                  </h3>
+                  <h3 className="text-title">{summary.latestPost.title}</h3>
                   <div className="mt-2 flex flex-wrap items-center gap-2">
                     <AuthorChip
                       name={summary.latestPost.authorName}
                       self={summary.latestPost.author === session.u}
                     />
-                    <span className="text-xs text-ink-400">
-                      {LONG_DATE.format(new Date(summary.latestPost.createdAt))}
+                    <span className="text-xs text-ink-muted">
+                      {LONG_DATE_TIME.format(new Date(summary.latestPost.createdAt))}
                     </span>
                   </div>
-                  <p className="mt-3 line-clamp-3 text-sm text-ink-600">
+                  <p className="mt-3 line-clamp-3 text-sm text-ink-muted">
                     {summary.latestPost.body}
                   </p>
                 </Link>
               ) : (
-                <p className="text-sm text-ink-400">Nessun post, per ora.</p>
+                <p className="text-sm text-ink-muted">No posts yet.</p>
               )}
             </section>
           </div>

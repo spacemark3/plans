@@ -23,18 +23,18 @@ export default function GlobalError({
 
   return (
     <main className="flex flex-1 items-center justify-center px-4 py-10 sm:px-6">
-      <div className="card-glass w-full max-w-sm p-6 text-center sm:p-8">
-        <span aria-hidden="true" className="text-4xl">
-          🌧️
+      <div className="card-brut w-full max-w-sm p-6 text-center sm:p-8">
+        <span aria-hidden="true" className="mark h-14 w-14 bg-pink text-3xl">
+          !
         </span>
-        <h1 className="mt-3 text-xl font-semibold">Qualcosa è andato storto</h1>
-        <p className="mt-2 text-sm text-ink-500">
-          Probabilmente è solo un intoppo momentaneo. Riprova tra un istante.
+        <h1 className="mt-3 text-title">Something went wrong</h1>
+        <p className="mt-2 text-sm text-ink-muted">
+          It is probably just a momentary hiccup. Try again in a second.
         </p>
 
         {error.digest ? (
-          <p className="mt-3 font-mono text-xs text-ink-400">
-            Codice: {error.digest}
+          <p className="mt-3 font-mono text-xs text-ink-muted">
+            Code: {error.digest}
           </p>
         ) : null}
 
@@ -44,10 +44,10 @@ export default function GlobalError({
             className="btn-primary flex-1"
             onClick={() => unstable_retry()}
           >
-            Riprova
+            Try again
           </button>
           <a href="/home" className="btn-ghost flex-1">
-            Torna a casa
+            Back home
           </a>
         </div>
       </div>

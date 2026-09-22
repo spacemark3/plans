@@ -1,59 +1,75 @@
 'use client'
 
 import { useRouter } from 'next/navigation'
-import { useMemo, useState } from 'react'
+import { useMemo, useState, type ReactNode } from 'react'
 
 import ConfirmDialog from '@/app/components/ConfirmDialog'
 import EmptyState from '@/app/components/EmptyState'
-import CategorySection from '@/app/components/items/CategorySection'
+import SectionIndex, { type IndexEntry } from '@/app/components/SectionIndex'
 import ItemCard from '@/app/components/items/ItemCard'
+import { SHORT_DATE_TIME } from '@/app/lib/dates'
 import ItemFormModal, {
   type ItemFormState,
 } from '@/app/components/items/ItemFormModal'
 import type { PartnerId } from '@/app/lib/auth'
 import type { ItemDTO, ItemKind } from '@/app/lib/types'
 
-const SECTIONS: {
-  kind: ItemKind
-  title: string
-  emoji: string
-  createLabel: string
-  empty: string
-}[] = [
-  {
-    kind: 'trip',
-    title: 'Viaggi',
-    emoji: '✈️',
-    createLabel: 'Aggiungi un viaggio',
-    empty: 'Nessun viaggio, per ora. Dove andiamo?',
+/**
+ * Per-category copy. Typographic marks replace the old ✈️/🎯 pair.
+ *
+ * Each kind owns a route now, so one board only ever renders one of these.
+ */
+const COPY: Record<
+  ItemKind,
+  { mark: string; createLabel: string; emptyTitle: string; empty: string }
+> = {
+  trip: {
+    mark: '01',
+    createLabel: 'Add a trip',
+    emptyTitle: 'No trips yet',
+    empty: 'Where should we go?',
   },
-  {
-    kind: 'challenge',
-    title: 'Sfide',
-    emoji: '🎯',
-    createLabel: 'Aggiungi una sfida',
-    empty: 'Nessuna sfida, per ora. Cosa proviamo?',
+  challenge: {
+    mark: '02',
+    createLabel: 'Add a challenge',
+    emptyTitle: 'No challenges yet',
+    empty: 'What should we try?',
   },
-]
+}
 
 /**
- * The single client island for /trips. It owns every piece of interactive
- * state; everything below it is presentational.
+ * The client island for one category page (/trips or /challenges). It owns
+ * every piece of interactive state; everything below it is presentational.
+ *
+ * `initialItems` arrives already filtered to `kind` by the page's getItems()
+ * call, so this component never has to think about the other category. The
+ * shape deliberately mirrors `BlogBoard`: create button, list or empty state,
+ * then the two dialogs.
  */
 export default function ItemsBoard({
   initialItems,
   me,
+  kind,
+  children,
 }: {
   initialItems: ItemDTO[]
   me: PartnerId
+  kind: ItemKind
+  /**
+   * The page heading, rendered on the server and passed through. This component
+   * owns `<main>` so the index can be its SIBLING rather than live inside it —
+   * passing server-rendered children into a client component keeps the heading
+   * off the client bundle.
+   */
+  children: ReactNode
 }) {
   const router = useRouter()
+  const copy = COPY[kind]
 
   const [items, setItems] = useState<ItemDTO[]>(initialItems)
-  const [open, setOpen] = useState<Record<ItemKind, boolean>>({
-    trip: true,
-    challenge: true,
-  })
+  // Which list is on screen. Completed items leave the to-do list entirely and
+  // live behind the Done button rather than in a section underneath it.
+  const [view, setView] = useState<'todo' | 'done'>('todo')
   // Accordion: at most one card expanded at a time.
   const [expandedId, setExpandedId] = useState<string | null>(null)
   const [form, setForm] = useState<ItemFormState | null>(null)
@@ -78,21 +94,31 @@ export default function ItemsBoard({
     setItems(initialItems)
   }
 
-  // Four derived lists: {trip, challenge} x {todo, done}.
-  const lists = useMemo(() => {
-    const empty = () => ({ todo: [] as ItemDTO[], done: [] as ItemDTO[] })
-    const grouped: Record<ItemKind, { todo: ItemDTO[]; done: ItemDTO[] }> = {
-      trip: empty(),
-      challenge: empty(),
-    }
+  const { todo, done } = useMemo(() => {
+    const buckets = { todo: [] as ItemDTO[], done: [] as ItemDTO[] }
     for (const item of items) {
-      const bucket = grouped[item.kind]
-      if (!bucket) continue
-      if (item.done) bucket.done.push(item)
-      else bucket.todo.push(item)
+      if (item.done) buckets.done.push(item)
+      else buckets.todo.push(item)
     }
-    return grouped
+    return buckets
   }, [items])
+
+  // Only one of the two lists is on screen at a time.
+  const visible = view === 'todo' ? todo : done
+
+  // The index follows the visible view. It must: its entries are anchors into
+  // rendered cards, and listing the hidden half would scroll to nothing.
+  const indexEntries = useMemo<IndexEntry[]>(
+    () =>
+      visible.map((item) => ({
+        id: item.id,
+        anchor: `item-${item.id}`,
+        label: item.title,
+        meta: SHORT_DATE_TIME.format(new Date(item.createdAt)),
+        done: item.done,
+      })),
+    [visible],
+  )
 
   function upsert(item: ItemDTO) {
     setItems((current) => {
@@ -114,6 +140,9 @@ export default function ItemsBoard({
         body: JSON.stringify({ done: !item.done }),
       })
       if (!response.ok) return
+      // The item is about to leave the list being viewed, so an expanded card
+      // would be left pointing at something no longer on screen.
+      setExpandedId(null)
       upsert((await response.json()) as ItemDTO)
     } catch {
       // Leave the item as it was; the next refresh reconciles.
@@ -140,12 +169,13 @@ export default function ItemsBoard({
     }
   }
 
-  function renderCard(item: ItemDTO) {
+  function renderCard(item: ItemDTO, index: number) {
     return (
       <li key={item.id}>
         <ItemCard
           item={item}
           me={me}
+          index={index}
           expanded={expandedId === item.id}
           pending={busyId === item.id}
           onToggleExpand={() =>
@@ -160,79 +190,103 @@ export default function ItemsBoard({
   }
 
   return (
-    <div className="flex flex-col gap-4">
-      {SECTIONS.map((section) => {
-        const { todo, done } = lists[section.kind]
-        return (
-          <CategorySection
-            key={section.kind}
-            id={section.kind}
-            title={section.title}
-            emoji={section.emoji}
-            // The counter tracks what is still to do, so marking something done
-            // decrements it.
-            count={todo.length}
-            open={open[section.kind]}
-            onToggle={() =>
-              setOpen((current) => ({
-                ...current,
-                [section.kind]: !current[section.kind],
-              }))
-            }
-            onCreate={() => setForm({ mode: 'create', kind: section.kind })}
-            createLabel={section.createLabel}
-          >
-            {todo.length === 0 && done.length === 0 ? (
-              <EmptyState emoji={section.emoji} title={section.empty} />
-            ) : (
-              <div className="flex flex-col gap-3">
-                {todo.length > 0 ? (
-                  <ul className="flex flex-col gap-2">{todo.map(renderCard)}</ul>
-                ) : null}
-
-                {/* Done items stay inside the same section, muted, below. */}
-                {done.length > 0 ? (
-                  <div className="flex flex-col gap-2">
-                    <p className="px-1 text-xs font-semibold tracking-wide text-ink-400 uppercase">
-                      Fatti · {done.length}
-                    </p>
-                    <ul className="flex flex-col gap-2 opacity-80">
-                      {done.map(renderCard)}
-                    </ul>
-                  </div>
-                ) : null}
-              </div>
-            )}
-          </CategorySection>
-        )
-      })}
-
-      {/* One form for create and edit alike. Keyed so each open remounts clean
-          rather than showing the previous item's text. */}
-      {form ? (
-        <ItemFormModal
-          key={form.mode === 'edit' ? form.item.id : `new-${form.kind}`}
-          state={form}
-          onClose={() => setForm(null)}
-          onSaved={(item) => {
-            upsert(item)
-            setForm(null)
-          }}
-        />
-      ) : null}
-
-      <ConfirmDialog
-        open={pendingDelete !== null}
-        title="Eliminare questa voce?"
-        message={
-          pendingDelete
-            ? `"${pendingDelete.title}" verrà eliminata per sempre. Non si può tornare indietro.`
-            : ''
-        }
-        pending={deleting}
-        onConfirm={confirmDelete}
-        onCancel={() => setPendingDelete(null)}
+    <>
+      {/* Outside <main>, and fixed to the viewport from xl up, so the list can
+          never resize or shift it. */}
+      <SectionIndex
+        entries={indexEntries}
+        label={`${copy.createLabel.replace('Add a ', '')} index`}
+        onSelect={setExpandedId}
       />
-    </div>
+
+      <main className="mx-auto w-full max-w-3xl flex-1 px-4 pb-16 pt-4 sm:px-6">
+        {children}
+
+        <div className="flex flex-col gap-4">
+          <div className="flex flex-wrap gap-2">
+            <button
+              type="button"
+              className="btn-primary"
+              onClick={() => setForm({ mode: 'create', kind })}
+            >
+              <span aria-hidden="true">＋</span> {copy.createLabel}
+            </button>
+
+            {/*
+              A toggle button, not a link or a tab: `aria-pressed` is what tells
+              a screen reader this control has an on state, and the yellow fill
+              is the matching visual. Pressing it again returns to the to-do
+              list, so it is the only control needed for both directions.
+            */}
+            <button
+              type="button"
+              aria-pressed={view === 'done'}
+              onClick={() => {
+                setView((current) => (current === 'todo' ? 'done' : 'todo'))
+                setExpandedId(null)
+              }}
+              className={view === 'done' ? 'btn-primary' : 'btn-ghost'}
+            >
+              Done · {done.length}
+            </button>
+          </div>
+
+          {items.length === 0 ? (
+            <EmptyState
+              mark={copy.mark}
+              title={copy.emptyTitle}
+              description={copy.empty}
+            />
+          ) : visible.length === 0 ? (
+            <EmptyState
+              mark={view === 'done' ? '✓' : copy.mark}
+              title={
+                view === 'done' ? 'Nothing done yet' : 'Nothing left to do'
+              }
+              description={
+                view === 'done'
+                  ? 'Tick something off and it will show up here.'
+                  : 'Everything is ticked off — the Done list has them all.'
+              }
+            />
+          ) : (
+            <ul className="flex min-w-0 flex-col gap-2">
+              {visible.map((item, i) => renderCard(item, i + 1))}
+            </ul>
+          )}
+
+          {/* One form for create and edit alike. Keyed so each open remounts
+              clean rather than showing the previous item's text. */}
+          {form ? (
+            <ItemFormModal
+              key={form.mode === 'edit' ? form.item.id : `new-${form.kind}`}
+              state={form}
+              onClose={() => setForm(null)}
+              onSaved={(item) => {
+                upsert(item)
+                setForm(null)
+                // A newly created item is always a to-do. If the Done list
+                // happens to be showing, it would be saved straight off-screen
+                // and look like nothing happened.
+                if (!item.done) setView('todo')
+              }}
+            />
+          ) : null}
+
+          <ConfirmDialog
+            open={pendingDelete !== null}
+            title="Delete this item?"
+            message={
+              pendingDelete
+                ? `"${pendingDelete.title}" will be deleted forever. There is no going back.`
+                : ''
+            }
+            pending={deleting}
+            onConfirm={confirmDelete}
+            onCancel={() => setPendingDelete(null)}
+          />
+        </div>
+      </main>
+    </>
   )
 }

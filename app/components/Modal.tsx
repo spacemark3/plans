@@ -123,7 +123,10 @@ export default function Modal({
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-end justify-center overflow-y-auto overscroll-contain bg-ink-900/25 backdrop-blur-sm sm:items-center sm:p-6"
+      /* Flat ink scrim, no blur: translucency and blur were the old glass
+         language. The items-end -> sm:items-center positioning stays — that is
+         layout (bottom sheet on phones), not skin. */
+      className="fixed inset-0 z-50 flex items-end justify-center overflow-y-auto overscroll-contain bg-ink/70 sm:items-center sm:p-6"
       onMouseDown={(event) => {
         // mousedown, not click: a drag that starts inside the panel and ends on
         // the overlay must not count as "clicked outside".
@@ -136,17 +139,17 @@ export default function Modal({
         aria-modal="true"
         aria-labelledby={titleId}
         tabIndex={-1}
-        className="card-glass w-full max-w-lg rounded-b-none p-5 shadow-lift outline-none sm:rounded-card sm:p-6"
+        className="card-brut w-full max-w-lg p-5 shadow-hard-lg outline-none sm:p-6"
       >
         <div className="mb-4 flex items-start justify-between gap-4">
-          <h2 id={titleId} className="text-lg font-semibold">
+          <h2 id={titleId} className="text-title">
             {title}
           </h2>
           <button
             type="button"
             onClick={onClose}
-            aria-label="Chiudi"
-            className="-mr-1 -mt-1 flex h-9 w-9 shrink-0 items-center justify-center rounded-pill text-ink-500 transition-colors hover:bg-blush-100 hover:text-blush-800"
+            aria-label="Close"
+            className="mark -mr-1 -mt-1 h-9 w-9 shrink-0 bg-pink"
           >
             <span aria-hidden="true" className="text-xl leading-none">
               ×

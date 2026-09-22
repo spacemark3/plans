@@ -40,8 +40,11 @@ A private two-person app: a shared bucket list of trips (*Viaggi*) and challenge
 
 ## Rules
 
-- **UI copy is Italian.** `<html lang="it">`. Error bodies from the API are
-  Italian too.
+- **UI copy is English.** `<html lang="en">`, and dates are formatted with
+  `Intl` using `'en-GB'`. Error bodies from the API are English too — the forms
+  render `data.error` straight into the UI, so a stray Italian string there
+  surfaces to the user.
+  (This was Italian until 2026-09-22; the whole app was translated in one pass.)
 - **Never trust a client-supplied `author`.** Authorship is always stamped from
   `session.u`, never from the request body.
 - **Write files with the Write/Edit tools, never shell redirection.** Italian

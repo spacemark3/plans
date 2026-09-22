@@ -12,9 +12,20 @@ export default function AuthorChip({
   /** True when this is the logged-in partner — worth a gentle visual nudge. */
   self?: boolean
 }) {
+  /* Replaces the old 💗/💙 pair. `name` is already resolved upstream by
+     partnerName(), which never returns an empty string, so charAt(0) is safe.
+     aria-hidden keeps it decorative — a screen reader still reads only the
+     name, exactly as it did with the emoji. */
+  const initial = name.trim().charAt(0).toUpperCase()
+
   return (
     <span className={self ? 'chip' : 'chip chip-quiet'}>
-      <span aria-hidden="true">{self ? '💗' : '💙'}</span>
+      <span
+        aria-hidden="true"
+        className="flex h-4 w-4 items-center justify-center border-2 border-ink text-[0.625rem] leading-none"
+      >
+        {initial}
+      </span>
       {name}
     </span>
   )

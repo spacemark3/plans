@@ -7,51 +7,51 @@ import { getSession } from '@/app/lib/session'
 
 export async function GET(): Promise<NextResponse> {
   const session = await getSession()
-  if (!session) return NextResponse.json({ error: 'Non autorizzato' }, { status: 401 })
+  if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
   try {
     return NextResponse.json(await getPosts())
   } catch (error) {
     console.error('GET /api/posts', error)
-    return NextResponse.json({ error: 'Database non raggiungibile.' }, { status: 503 })
+    return NextResponse.json({ error: 'Database unreachable.' }, { status: 503 })
   }
 }
 
 export async function POST(request: NextRequest): Promise<NextResponse> {
   const session = await getSession()
-  if (!session) return NextResponse.json({ error: 'Non autorizzato' }, { status: 401 })
+  if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
   let payload: Record<string, unknown>
   try {
     payload = (await request.json()) as Record<string, unknown>
   } catch {
-    return NextResponse.json({ error: 'Richiesta non valida.' }, { status: 400 })
+    return NextResponse.json({ error: 'Invalid request.' }, { status: 400 })
   }
 
   const { title, body, photoUrl } = payload
 
   if (typeof title !== 'string' || title.trim().length === 0) {
-    return NextResponse.json({ error: 'Il titolo è obbligatorio.' }, { status: 400 })
+    return NextResponse.json({ error: 'A title is required.' }, { status: 400 })
   }
   if (title.trim().length > 160) {
     return NextResponse.json(
-      { error: 'Il titolo può avere al massimo 160 caratteri.' },
+      { error: 'The title can be at most 160 characters.' },
       { status: 400 },
     )
   }
 
   if (typeof body !== 'string' || body.trim().length === 0) {
-    return NextResponse.json({ error: 'Il testo è obbligatorio.' }, { status: 400 })
+    return NextResponse.json({ error: 'The text is required.' }, { status: 400 })
   }
   if (body.trim().length > 20000) {
     return NextResponse.json(
-      { error: 'Il testo può avere al massimo 20000 caratteri.' },
+      { error: 'The text can be at most 20000 characters.' },
       { status: 400 },
     )
   }
 
   if (photoUrl !== undefined && photoUrl !== null && typeof photoUrl !== 'string') {
-    return NextResponse.json({ error: 'Foto non valida.' }, { status: 400 })
+    return NextResponse.json({ error: 'Invalid photo.' }, { status: 400 })
   }
 
   try {
@@ -67,6 +67,6 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     return NextResponse.json(toPostDTO(created.toObject()), { status: 201 })
   } catch (error) {
     console.error('POST /api/posts', error)
-    return NextResponse.json({ error: 'Non sono riuscito a salvare.' }, { status: 503 })
+    return NextResponse.json({ error: 'Could not save.' }, { status: 503 })
   }
 }

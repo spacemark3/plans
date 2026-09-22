@@ -3,7 +3,7 @@
 import { useRouter } from 'next/navigation'
 import { useState } from 'react'
 
-export default function LogoutButton() {
+export default function LogoutButton({ className = '' }: { className?: string }) {
   const router = useRouter()
   const [pending, setPending] = useState(false)
 
@@ -20,15 +20,16 @@ export default function LogoutButton() {
   }
 
   return (
+    /* The label is always visible now that the 👋 is gone, so the old
+       emoji-plus-sr-only-text arrangement is no longer needed: "Log out" is
+       short enough to survive the narrowest layout on its own. */
     <button
       type="button"
       onClick={onClick}
       disabled={pending}
-      className="shrink-0 rounded-pill px-2.5 py-2 text-sm font-semibold text-ink-500 transition-colors hover:bg-blush-100 hover:text-blush-800 disabled:opacity-55 sm:px-3.5"
+      className={`btn-ghost shrink-0 px-2.5 sm:px-3.5 ${className}`}
     >
-      <span aria-hidden="true">👋</span>
-      <span className="ml-1.5 hidden sm:inline">{pending ? 'Esco...' : 'Esci'}</span>
-      <span className="sr-only sm:hidden">Esci</span>
+      {pending ? 'Logging out...' : 'Log out'}
     </button>
   )
 }

@@ -1,26 +1,31 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64" role="img" aria-label="Bucket list">
-  <defs>
-    <linearGradient id="blush" x1="0" y1="0" x2="0" y2="1">
-      <stop offset="0%" stop-color="#ffd9e4"/>
-      <stop offset="100%" stop-color="#f2789f"/>
-    </linearGradient>
-  </defs>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64" role="img" aria-labelledby="t">
+  <title id="t">Notes</title>
 
-  <rect width="64" height="64" rx="16" fill="url(#blush)"/>
+  <!--
+    Favicon, in the app's neo-brutalist language: flat spot colour, pure black,
+    hard 90-degree corners, no gradient.
 
-  <!-- checklist lines -->
-  <g stroke="#ffffff" stroke-width="3.5" stroke-linecap="round" opacity="0.92">
-    <path d="M28 24h16"/>
-    <path d="M28 34h16"/>
-    <path d="M28 44h10"/>
+    Hex literals are unavoidable here and do NOT break the "no bare hex" rule in
+    AGENTS.md — that rule is about components, and a standalone SVG asset cannot
+    read the @theme tokens. The values are copied from app/globals.css:
+      #FFE500 --color-yellow   #000000 --color-ink
+
+    Drawn for 16x16 above all else: at that size anything thinner than about
+    3 units of this 64-unit viewBox disappears, so it is three heavy bars on a
+    full-bleed field and nothing more. The bars are square, not rounded, and the
+    last is short — the universal shape for a written note.
+  -->
+
+  <rect width="64" height="64" fill="#FFE500"/>
+
+  <!-- Border drawn as a stroked rect inset by half its width, so it sits fully
+       inside the viewBox and never gets clipped. Gives the icon an edge on a
+       light tab bar, where yellow alone would bleed into the background. -->
+  <rect x="3" y="3" width="58" height="58" fill="none" stroke="#000000" stroke-width="6"/>
+
+  <g fill="#000000">
+    <rect x="15" y="19" width="34" height="6"/>
+    <rect x="15" y="29" width="34" height="6"/>
+    <rect x="15" y="39" width="20" height="6"/>
   </g>
-
-  <!-- ticks -->
-  <g fill="none" stroke="#ffffff" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round">
-    <path d="M18 23.5l3 3 5-6"/>
-    <path d="M18 33.5l3 3 5-6"/>
-  </g>
-
-  <!-- the last one is still a heart, not a tick -->
-  <path d="M21.6 41.4c-1.9-1.8-5-1.5-6.4.8-1.1 1.8-.6 4.1 1 5.5l4.8 4.2a.9.9 0 0 0 1.2 0l4.8-4.2c1.6-1.4 2.1-3.7 1-5.5-1.4-2.3-4.5-2.6-6.4-.8z" fill="#ffffff"/>
 </svg>

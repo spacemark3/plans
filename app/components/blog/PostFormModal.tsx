@@ -56,14 +56,14 @@ export default function PostFormModal({
       if (!response.ok) {
         setError(
           (data as { error?: string } | null)?.error ??
-            'Non sono riuscito a salvare. Riprova.',
+            'Could not save. Please try again.',
         )
         return
       }
 
       onSaved(data as PostDTO)
     } catch {
-      setError('Impossibile raggiungere il server. Controlla la connessione.')
+      setError('Could not reach the server. Check your connection.')
     } finally {
       setPending(false)
     }
@@ -72,20 +72,20 @@ export default function PostFormModal({
   return (
     <Modal
       open
-      title={state.mode === 'edit' ? 'Modifica il post' : 'Nuovo post'}
+      title={state.mode === 'edit' ? 'Edit post' : 'New post'}
       onClose={onClose}
     >
       <form onSubmit={onSubmit} noValidate className="flex flex-col gap-4">
         <div>
           <label htmlFor="post-title" className="label">
-            Titolo
+            Title
           </label>
           <input
             id="post-title"
             className="field"
             value={title}
             onChange={(event) => setTitle(event.target.value)}
-            placeholder="Il nostro weekend in montagna"
+            placeholder="Our weekend in the mountains"
             maxLength={160}
             autoFocus
             disabled={pending}
@@ -95,14 +95,14 @@ export default function PostFormModal({
 
         <div>
           <label htmlFor="post-body" className="label">
-            Testo
+            Text
           </label>
           <textarea
             id="post-body"
             className="field min-h-44 resize-y"
             value={body}
             onChange={(event) => setBody(event.target.value)}
-            placeholder="Racconta com'è andata..."
+            placeholder="Tell the story..."
             maxLength={20000}
             disabled={pending}
           />
@@ -116,7 +116,7 @@ export default function PostFormModal({
         />
 
         {error ? (
-          <p role="alert" className="text-sm font-medium text-blush-700">
+          <p role="alert" className="alert text-sm">
             {error}
           </p>
         ) : null}
@@ -133,12 +133,12 @@ export default function PostFormModal({
             }
           >
             {uploading
-              ? 'Aspetta la foto...'
+              ? 'Waiting for photo...'
               : pending
-                ? 'Salvo...'
+                ? 'Saving...'
                 : state.mode === 'edit'
-                  ? 'Salva'
-                  : 'Pubblica'}
+                  ? 'Save'
+                  : 'Publish'}
           </button>
           <button
             type="button"
@@ -146,7 +146,7 @@ export default function PostFormModal({
             onClick={onClose}
             disabled={pending}
           >
-            Annulla
+            Cancel
           </button>
         </div>
       </form>

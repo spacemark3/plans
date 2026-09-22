@@ -11,24 +11,24 @@ export type ItemFormState =
   | { mode: 'create'; kind: ItemKind }
   | { mode: 'edit'; item: ItemDTO }
 
-/** Italian needs the article to agree, so each category carries its own copy. */
+/** Each category carries its own heading and placeholder copy. */
 const COPY: Record<ItemKind, { create: string; edit: string; hint: string }> = {
   trip: {
-    create: 'Nuovo viaggio',
-    edit: 'Modifica viaggio',
-    hint: 'Aurora boreale in Norvegia',
+    create: 'New trip',
+    edit: 'Edit trip',
+    hint: 'Northern lights in Norway',
   },
   challenge: {
-    create: 'Nuova sfida',
-    edit: 'Modifica sfida',
-    hint: 'Correre una mezza maratona',
+    create: 'New challenge',
+    edit: 'Edit challenge',
+    hint: 'Run a half marathon',
   },
 }
 
 /**
- * One component, four jobs: new viaggio, new sfida, edit viaggio, edit sfida.
+ * One component, four jobs: new trip, new challenge, edit trip, edit challenge.
  * Heading, endpoint and method are all derived from `state` — which is what
- * lets two create buttons and every card's Modifica share a single form.
+ * lets two create buttons and every card's Edit share a single form.
  *
  * PHASE 4: still no photo field (Phase 5 adds `PhotoField`, and must then also
  * disable submit while an upload is in flight).
@@ -88,14 +88,14 @@ export default function ItemFormModal({
       if (!response.ok) {
         setError(
           (data as { error?: string } | null)?.error ??
-            'Non sono riuscito a salvare. Riprova.',
+            'Could not save. Please try again.',
         )
         return
       }
 
       onSaved(data as ItemDTO)
     } catch {
-      setError('Impossibile raggiungere il server. Controlla la connessione.')
+      setError('Could not reach the server. Check your connection.')
     } finally {
       setPending(false)
     }
@@ -106,7 +106,7 @@ export default function ItemFormModal({
       <form onSubmit={onSubmit} noValidate className="flex flex-col gap-4">
         <div>
           <label htmlFor="item-title" className="label">
-            Titolo
+            Title
           </label>
           <input
             id="item-title"
@@ -123,14 +123,14 @@ export default function ItemFormModal({
 
         <div>
           <label htmlFor="item-description" className="label">
-            Descrizione <span className="font-normal text-ink-400">(facoltativa)</span>
+            Description <span className="font-normal text-ink-muted">(optional)</span>
           </label>
           <textarea
             id="item-description"
             className="field min-h-28 resize-y"
             value={description}
             onChange={(event) => setDescription(event.target.value)}
-            placeholder="Qualche dettaglio, un link, una data..."
+            placeholder="Some detail, a link, a date..."
             maxLength={4000}
             disabled={pending}
           />
@@ -144,7 +144,7 @@ export default function ItemFormModal({
         />
 
         {error ? (
-          <p role="alert" className="text-sm font-medium text-blush-700">
+          <p role="alert" className="alert text-sm">
             {error}
           </p>
         ) : null}
@@ -156,12 +156,12 @@ export default function ItemFormModal({
             disabled={pending || uploading || title.trim().length === 0}
           >
             {uploading
-              ? 'Aspetta la foto...'
+              ? 'Waiting for photo...'
               : pending
-                ? 'Salvo...'
+                ? 'Saving...'
                 : state.mode === 'edit'
-                  ? 'Salva'
-                  : 'Aggiungi'}
+                  ? 'Save'
+                  : 'Add'}
           </button>
           <button
             type="button"
@@ -169,7 +169,7 @@ export default function ItemFormModal({
             onClick={onClose}
             disabled={pending}
           >
-            Annulla
+            Cancel
           </button>
         </div>
       </form>

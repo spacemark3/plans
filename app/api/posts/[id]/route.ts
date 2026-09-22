@@ -7,14 +7,14 @@ import Post from '@/app/lib/models/Post'
 import dbConnect from '@/app/lib/mongoose'
 import { getSession } from '@/app/lib/session'
 
-const NOT_FOUND = { error: 'Post non trovato.' }
+const NOT_FOUND = { error: 'Post not found.' }
 
 export async function PATCH(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> },
 ): Promise<NextResponse> {
   const session = await getSession()
-  if (!session) return NextResponse.json({ error: 'Non autorizzato' }, { status: 401 })
+  if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
   const { id } = await params
   if (!mongoose.isValidObjectId(id)) return NextResponse.json(NOT_FOUND, { status: 404 })
@@ -23,18 +23,18 @@ export async function PATCH(
   try {
     payload = (await request.json()) as Record<string, unknown>
   } catch {
-    return NextResponse.json({ error: 'Richiesta non valida.' }, { status: 400 })
+    return NextResponse.json({ error: 'Invalid request.' }, { status: 400 })
   }
 
   const { title, body, photoUrl } = payload
 
   if (title !== undefined) {
     if (typeof title !== 'string' || title.trim().length === 0) {
-      return NextResponse.json({ error: 'Il titolo è obbligatorio.' }, { status: 400 })
+      return NextResponse.json({ error: 'A title is required.' }, { status: 400 })
     }
     if (title.trim().length > 160) {
       return NextResponse.json(
-        { error: 'Il titolo può avere al massimo 160 caratteri.' },
+        { error: 'The title can be at most 160 characters.' },
         { status: 400 },
       )
     }
@@ -42,18 +42,18 @@ export async function PATCH(
 
   if (body !== undefined) {
     if (typeof body !== 'string' || body.trim().length === 0) {
-      return NextResponse.json({ error: 'Il testo è obbligatorio.' }, { status: 400 })
+      return NextResponse.json({ error: 'The text is required.' }, { status: 400 })
     }
     if (body.trim().length > 20000) {
       return NextResponse.json(
-        { error: 'Il testo può avere al massimo 20000 caratteri.' },
+        { error: 'The text can be at most 20000 characters.' },
         { status: 400 },
       )
     }
   }
 
   if (photoUrl !== undefined && photoUrl !== null && typeof photoUrl !== 'string') {
-    return NextResponse.json({ error: 'Foto non valida.' }, { status: 400 })
+    return NextResponse.json({ error: 'Invalid photo.' }, { status: 400 })
   }
 
   try {
@@ -82,7 +82,7 @@ export async function PATCH(
     return NextResponse.json(toPostDTO(existing.toObject()))
   } catch (error) {
     console.error('PATCH /api/posts/[id]', error)
-    return NextResponse.json({ error: 'Non sono riuscito a salvare.' }, { status: 503 })
+    return NextResponse.json({ error: 'Could not save.' }, { status: 503 })
   }
 }
 
@@ -91,7 +91,7 @@ export async function DELETE(
   { params }: { params: Promise<{ id: string }> },
 ): Promise<NextResponse> {
   const session = await getSession()
-  if (!session) return NextResponse.json({ error: 'Non autorizzato' }, { status: 401 })
+  if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
   const { id } = await params
   if (!mongoose.isValidObjectId(id)) return NextResponse.json(NOT_FOUND, { status: 404 })
@@ -110,6 +110,6 @@ export async function DELETE(
     return NextResponse.json({ ok: true })
   } catch (error) {
     console.error('DELETE /api/posts/[id]', error)
-    return NextResponse.json({ error: 'Non sono riuscito a eliminare.' }, { status: 503 })
+    return NextResponse.json({ error: 'Could not delete.' }, { status: 503 })
   }
 }

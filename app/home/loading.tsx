@@ -4,7 +4,7 @@ export default function HomeLoading() {
   return (
     <main
       aria-busy="true"
-      aria-label="Caricamento"
+      aria-label="Loading"
       className="mx-auto w-full max-w-3xl flex-1 px-4 pb-16 pt-4 sm:px-6"
     >
       <Skeleton className="mb-6 h-8 w-48" />

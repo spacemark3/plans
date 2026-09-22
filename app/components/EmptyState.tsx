@@ -1,24 +1,25 @@
 import type { ReactNode } from 'react'
 
 export default function EmptyState({
-  emoji,
+  mark,
   title,
   description,
   action,
 }: {
-  emoji: string
+  /** A short typographic mark — the replacement for the old `emoji` prop. */
+  mark: string
   title: string
   description?: string
   action?: ReactNode
 }) {
   return (
-    <div className="flex flex-col items-center gap-3 rounded-card border border-dashed border-blush-200 px-6 py-10 text-center">
-      <span aria-hidden="true" className="text-4xl">
-        {emoji}
+    <div className="card-dashed flex flex-col items-center gap-3 px-6 py-10 text-center">
+      <span aria-hidden="true" className="font-display text-poster">
+        {mark}
       </span>
-      <p className="text-base font-semibold text-ink-800">{title}</p>
+      <p className="font-display text-title">{title}</p>
       {description ? (
-        <p className="max-w-sm text-sm text-ink-500">{description}</p>
+        <p className="max-w-sm text-sm text-ink-muted">{description}</p>
       ) : null}
       {action}
     </div>

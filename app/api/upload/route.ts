@@ -38,18 +38,18 @@ export async function POST(request: Request): Promise<NextResponse> {
   //     fails with "No read-write token found" — rejected, but for the wrong
   //     reason, which makes the auth gate impossible to actually test.
   //  2. It makes this handler match every other route in the app: session check
-  //     first, 401 JSON in Italian.
+  //     first, 401 JSON.
   //
   // The check inside onBeforeGenerateToken stays as well — defence in depth.
   if (!session) {
-    return NextResponse.json({ error: 'Non autorizzato' }, { status: 401 })
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
 
   let body: HandleUploadBody
   try {
     body = (await request.json()) as HandleUploadBody
   } catch {
-    return NextResponse.json({ error: 'Richiesta non valida.' }, { status: 400 })
+    return NextResponse.json({ error: 'Invalid request.' }, { status: 400 })
   }
 
   try {
@@ -58,7 +58,7 @@ export async function POST(request: Request): Promise<NextResponse> {
       request,
       onBeforeGenerateToken: async () => {
         // No session, no token. This is the only gate on uploads.
-        if (!session) throw new Error('Non autorizzato')
+        if (!session) throw new Error('Unauthorized')
 
         return {
           allowedContentTypes: ALLOWED_CONTENT_TYPES,

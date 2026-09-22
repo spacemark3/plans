@@ -10,13 +10,14 @@ export default async function BlogPage() {
   return (
     <>
       <NavBar active="blog" />
-      <main className="mx-auto w-full max-w-3xl flex-1 px-4 pb-16 pt-4 sm:px-6">
-        <h1 className="mb-1 text-2xl font-semibold">Il blog</h1>
-        <p className="mb-6 text-sm text-ink-500">
-          Pensieri e racconti, dal più recente.
+      {/* The board owns <main> so the index can sit outside it. The heading is
+          still rendered here, on the server, and passed straight through. */}
+      <BlogBoard initialPosts={posts} me={session.u}>
+        <h1 className="mb-1 text-poster">The blog</h1>
+        <p className="mb-6 text-sm text-ink-muted">
+          Thoughts and stories, newest first.
         </p>
-        <BlogBoard initialPosts={posts} me={session.u} />
-      </main>
+      </BlogBoard>
     </>
   )
 }
